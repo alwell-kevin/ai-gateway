@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/envoyproxy/ai-gateway/filterapi"
-	"github.com/envoyproxy/ai-gateway/internal/apischema/openai"
 	"github.com/envoyproxy/ai-gateway/internal/extproc/translator"
 	tracing "github.com/envoyproxy/ai-gateway/internal/tracing/api"
 )
@@ -201,6 +200,9 @@ func Test_parseOpenAIResponsesBody(t *testing.T) {
 	_, req, err = parseOpenAIResponsesBody(&extprocv3.HttpBody{Body: raw})
 	require.NoError(t, err)
 	require.True(t, req.Stream)
+
+	_, _, err = parseOpenAIResponsesBody(&extprocv3.HttpBody{Body: []byte(`{"input":"hi"}`)})
+	require.ErrorContains(t, err, "missing required field: model")
 
 	_, _, err = parseOpenAIResponsesBody(&extprocv3.HttpBody{Body: []byte("not json")})
 	require.ErrorContains(t, err, "failed to unmarshal body")

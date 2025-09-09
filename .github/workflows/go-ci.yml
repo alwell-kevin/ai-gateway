@@ -1,0 +1,27 @@
+name: go-ci
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Harden module downloads
+        run: |
+          go env -w GOPROXY=https://proxy.golang.org,direct
+          go env -w GOSUMDB=sum.golang.org
+          go mod download
+      - name: Build
+        run: go build ./...
+      - name: Unit tests (no cache)
+        run: go test ./... -count=1 -v

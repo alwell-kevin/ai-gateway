@@ -96,6 +96,7 @@ type mockResponsesTranslator struct {
 	retHeaderMutation           *extprocv3.HeaderMutation
 	retBodyMutation             *extprocv3.BodyMutation
 	retUsedToken                translator.LLMTokenUsage
+	retLatencyTokens            uint32
 	retErr                      error
 	expForceRequestBodyMutation bool
 }
