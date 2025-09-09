@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"strconv"
+	"strings"
 
 	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	extprocv3http "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/ext_proc/v3"
@@ -373,6 +374,9 @@ func parseOpenAIResponsesBody(body *extprocv3.HttpBody) (string, *openai.Respons
 		if err := json.Unmarshal(m, &req.Model); err != nil {
 			return "", nil, fmt.Errorf("invalid model: %w", err)
 		}
+	}
+	if strings.TrimSpace(req.Model) == "" {
+		return "", nil, fmt.Errorf("missing required field: model")
 	}
 	if inp, ok := raw["input"]; ok {
 		req.Input = inp

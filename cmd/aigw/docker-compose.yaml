@@ -17,7 +17,10 @@ services:
     volumes:
       - ../..:/workspace
       - aigw-target:/workspace/out
-    command: ["bash", "-c", "go build -buildvcs=false -o /workspace/out/aigw ./cmd/aigw"]
+    environment:
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
+    command: ["bash", "-c", "go mod download && go build -buildvcs=false -o /workspace/out/aigw ./cmd/aigw"]
 
   # ollama-pull pulls the models defined in .env.ollama, to avoid 404s.
   ollama-pull:

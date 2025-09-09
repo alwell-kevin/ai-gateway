@@ -15,7 +15,10 @@ services:
     volumes:
       - ../../..:/workspace
       - extproc-target:/workspace/out
-    command: ["bash", "-c", "go build -buildvcs=false -o /workspace/out/extproc ./cmd/extproc"]
+    environment:
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
+    command: ["bash", "-c", "go mod download && go build -buildvcs=false -o /workspace/out/extproc ./cmd/extproc"]
 
   extproc:
     image: debian:trixie-slim
