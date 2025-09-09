@@ -364,9 +364,27 @@ func (r *responsesProcessorUpstreamFilter) mergeWithTokenLatencyMetadata(metadat
 }
 
 func parseOpenAIResponsesBody(body *extprocv3.HttpBody) (string, *openai.ResponsesRequest, error) {
-	var request openai.ResponsesRequest
-	if err := json.Unmarshal(body.Body, &request); err != nil {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body.Body, &raw); err != nil {
 		return "", nil, fmt.Errorf("failed to unmarshal body: %w", err)
 	}
-	return request.Model, &request, nil
+	var req openai.ResponsesRequest
+	if m, ok := raw["model"]; ok {
+		if err := json.Unmarshal(m, &req.Model); err != nil {
+			return "", nil, fmt.Errorf("invalid model: %w", err)
+		}
+	}
+	if inp, ok := raw["input"]; ok {
+		req.Input = inp
+	}
+	if s, ok := raw["stream"]; ok {
+		var b bool
+		if err := json.Unmarshal(s, &b); err == nil {
+			req.Stream = b
+		} else {
+			// Non-boolean values (e.g., objects) enable streaming.
+			req.Stream = true
+		}
+	}
+	return req.Model, &req, nil
 }

@@ -193,6 +193,14 @@ func Test_parseOpenAIResponsesBody(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "foo", model)
 	require.Equal(t, "foo", req.Model)
+	require.False(t, req.Stream)
+
+	// Accept non-boolean stream values and treat them as enabling streaming.
+	raw, err := json.Marshal(map[string]any{"model": "bar", "input": "hi", "stream": map[string]any{"type": "sse"}})
+	require.NoError(t, err)
+	_, req, err = parseOpenAIResponsesBody(&extprocv3.HttpBody{Body: raw})
+	require.NoError(t, err)
+	require.True(t, req.Stream)
 
 	_, _, err = parseOpenAIResponsesBody(&extprocv3.HttpBody{Body: []byte("not json")})
 	require.ErrorContains(t, err, "failed to unmarshal body")

@@ -1161,7 +1161,15 @@ type ResponsesRequest struct {
 	// Model specifies which model should service the request.
 	Model string `json:"model"`
 
-	// Stream enables Server Sent Events streaming when set to true.
+	// Input carries the prompt or conversation content. It is kept as raw
+	// JSON since the gateway only inspects the model and streaming flag
+	// for routing purposes.
+	Input json.RawMessage `json:"input,omitempty"`
+
+	// Stream enables Server Sent Events streaming when set to true. The
+	// upstream API allows this field to be either a boolean or an object
+	// with additional streaming configuration. Any non-false value enables
+	// streaming.
 	Stream bool `json:"stream,omitempty"`
 }
 
