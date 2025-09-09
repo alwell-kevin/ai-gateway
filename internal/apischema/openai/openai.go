@@ -1153,6 +1153,41 @@ type ChatCompletionResponseChunkChoiceDelta struct {
 	Annotations *[]Annotation                        `json:"annotations,omitempty"`
 }
 
+// ResponsesRequest represents the subset of the OpenAI Responses API request
+// used by Envoy Gateway. The structure of the request body is significantly
+// larger in the upstream API, however only the model identifier and streaming
+// indicator are required for routing and token accounting.
+type ResponsesRequest struct {
+	// Model specifies which model should service the request.
+	Model string `json:"model"`
+
+	// Stream enables Server Sent Events streaming when set to true.
+	Stream bool `json:"stream,omitempty"`
+}
+
+// ResponsesUsage captures the token accounting returned as part of the
+// responses endpoint payload.
+type ResponsesUsage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+}
+
+// ResponsesResponse is a reduced representation of the Responses API response
+// which focuses on the usage statistics needed by the gateway. All other
+// fields present in the upstream response are forwarded transparently.
+type ResponsesResponse struct {
+	Usage ResponsesUsage `json:"usage"`
+}
+
+// ResponsesStreamEvent models an individual Server Sent Events message emitted
+// by the Responses streaming endpoint. The gateway is interested in
+// `response.completed` events so that the token usage can be extracted.
+type ResponsesStreamEvent struct {
+	Type     string             `json:"type"`
+	Response *ResponsesResponse `json:"response,omitempty"`
+}
+
 // Error is described in the OpenAI API documentation
 // https://platform.openai.com/docs/api-reference/realtime-server-events/error
 type Error struct {

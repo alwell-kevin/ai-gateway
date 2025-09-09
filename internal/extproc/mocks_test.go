@@ -29,6 +29,7 @@ var (
 	_ Processor                                 = &mockProcessor{}
 	_ translator.OpenAIChatCompletionTranslator = &mockTranslator{}
 	_ translator.OpenAIEmbeddingTranslator      = &mockEmbeddingTranslator{}
+	_ translator.OpenAIResponsesTranslator      = &mockResponsesTranslator{}
 )
 
 func newMockProcessor(_ *processorConfig, _ *slog.Logger) Processor {
@@ -82,6 +83,19 @@ type mockTranslator struct {
 	retHeaderMutation           *extprocv3.HeaderMutation
 	retBodyMutation             *extprocv3.BodyMutation
 	retUsedToken                translator.LLMTokenUsage
+	retLatencyTokens            uint32
+	retErr                      error
+	expForceRequestBodyMutation bool
+}
+
+type mockResponsesTranslator struct {
+	t                           *testing.T
+	expHeaders                  map[string]string
+	expRequestBody              *openai.ResponsesRequest
+	expResponseBody             *extprocv3.HttpBody
+	retHeaderMutation           *extprocv3.HeaderMutation
+	retBodyMutation             *extprocv3.BodyMutation
+	retUsedToken                translator.LLMTokenUsage
 	retErr                      error
 	expForceRequestBodyMutation bool
 }
@@ -117,6 +131,35 @@ func (m mockTranslator) ResponseBody(_ map[string]string, body io.Reader, _ bool
 		require.Equal(m.t, m.expResponseBody.Body, buf)
 	}
 	return m.retHeaderMutation, m.retBodyMutation, m.retUsedToken, m.retErr
+}
+
+func (m mockResponsesTranslator) RequestBody(_ []byte, body *openai.ResponsesRequest, forceRequestBodyMutation bool) (headerMutation *extprocv3.HeaderMutation, bodyMutation *extprocv3.BodyMutation, err error) {
+	require.Equal(m.t, m.expRequestBody, body)
+	require.Equal(m.t, m.expForceRequestBodyMutation, forceRequestBodyMutation)
+	return m.retHeaderMutation, m.retBodyMutation, m.retErr
+}
+
+func (m mockResponsesTranslator) ResponseHeaders(headers map[string]string) (*extprocv3.HeaderMutation, error) {
+	require.Equal(m.t, m.expHeaders, headers)
+	return m.retHeaderMutation, m.retErr
+}
+
+func (m mockResponsesTranslator) ResponseError(_ map[string]string, body io.Reader) (*extprocv3.HeaderMutation, *extprocv3.BodyMutation, error) {
+	if m.expResponseBody != nil {
+		buf, err := io.ReadAll(body)
+		require.NoError(m.t, err)
+		require.Equal(m.t, m.expResponseBody.Body, buf)
+	}
+	return m.retHeaderMutation, m.retBodyMutation, m.retErr
+}
+
+func (m mockResponsesTranslator) ResponseBody(_ map[string]string, body io.Reader, _ bool) (*extprocv3.HeaderMutation, *extprocv3.BodyMutation, translator.LLMTokenUsage, uint32, error) {
+	if m.expResponseBody != nil {
+		buf, err := io.ReadAll(body)
+		require.NoError(m.t, err)
+		require.Equal(m.t, m.expResponseBody.Body, buf)
+	}
+	return m.retHeaderMutation, m.retBodyMutation, m.retUsedToken, m.retLatencyTokens, m.retErr
 }
 
 // mockExternalProcessingStream implements [extprocv3.ExternalProcessor_ProcessServer] for testing.

@@ -172,6 +172,7 @@ func Main(ctx context.Context, args []string, stderr io.Writer) (err error) {
 		return fmt.Errorf("failed to create external processor server: %w", err)
 	}
 	server.Register(path.Join(flags.rootPrefix, "/v1/chat/completions"), extproc.ChatCompletionProcessorFactory(chatCompletionMetrics))
+	server.Register(path.Join(flags.rootPrefix, "/v1/responses"), extproc.ResponsesProcessorFactory(chatCompletionMetrics))
 	server.Register(path.Join(flags.rootPrefix, "/v1/embeddings"), extproc.EmbeddingsProcessorFactory(embeddingsMetrics))
 	server.Register(path.Join(flags.rootPrefix, "/v1/models"), extproc.NewModelsProcessor)
 	server.Register(path.Join(flags.rootPrefix, "/anthropic/v1/messages"), extproc.MessagesProcessorFactory(chatCompletionMetrics))
