@@ -69,6 +69,44 @@ type OpenAIChatCompletionTranslator interface {
 	ResponseError(respHeaders map[string]string, body io.Reader) (headerMutation *extprocv3.HeaderMutation, bodyMutation *extprocv3.BodyMutation, err error)
 }
 
+// OpenAIResponsesTranslator translates requests and responses for the
+// /v1/responses endpoint when using the OpenAI schema.
+//
+// This translator mirrors the behaviour of the chat completion translator but
+// omits tracing specific parameters as responses currently do not emit spans.
+type OpenAIResponsesTranslator interface {
+	RequestBody(raw []byte, body *openai.ResponsesRequest, forceBodyMutation bool) (
+		headerMutation *extprocv3.HeaderMutation,
+		bodyMutation *extprocv3.BodyMutation,
+		err error,
+	)
+
+	ResponseHeaders(headers map[string]string) (
+		headerMutation *extprocv3.HeaderMutation,
+		err error,
+	)
+
+	// ResponseBody translates the response body. When stream=true, this is called for each chunk of the response body.
+	//      - `body` is the response body either chunk or the entire body, depending on the context.
+	//      - This returns `headerMutation` and `bodyMutation` that can be nil to indicate no mutation.
+	//      - This returns `tokenUsage` that is extracted from the body and will be used to do token rate limiting.
+	//      - `latencyTokens` represents the number of streamed delta events in the chunk and is used to populate token
+	//        latency metrics when usage is only emitted at the end of a stream.
+	ResponseBody(respHeaders map[string]string, body io.Reader, endOfStream bool) (
+		headerMutation *extprocv3.HeaderMutation,
+		bodyMutation *extprocv3.BodyMutation,
+		tokenUsage LLMTokenUsage,
+		latencyTokens uint32,
+		err error,
+	)
+
+	ResponseError(respHeaders map[string]string, body io.Reader) (
+		headerMutation *extprocv3.HeaderMutation,
+		bodyMutation *extprocv3.BodyMutation,
+		err error,
+	)
+}
+
 func setContentLength(headers *extprocv3.HeaderMutation, body []byte) {
 	headers.SetHeaders = append(headers.SetHeaders, &corev3.HeaderValueOption{
 		Header: &corev3.HeaderValue{

@@ -440,6 +440,12 @@ func getFakeResponse(path string) ([]byte, error) {
 			chatCompletionFakeResponses[rand.New(rand.NewSource(uint64(time.Now().UnixNano()))).
 				Intn(len(chatCompletionFakeResponses))])
 		return []byte(msg), nil
+	case "/v1/responses":
+		const responsesTemplate = `{"id":"resp-test","output":[{"content":[{"type":"output_text","text":"%s"}],"type":"message"}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}`
+		msg := fmt.Sprintf(responsesTemplate,
+			chatCompletionFakeResponses[rand.New(rand.NewSource(uint64(time.Now().UnixNano()))).
+				Intn(len(chatCompletionFakeResponses))])
+		return []byte(msg), nil
 	case "/v1/embeddings":
 		const embeddingTemplate = `{"object":"list","data":[{"object":"embedding","embedding":[0.1,0.2,0.3,0.4,0.5],"index":0}],"model":"some-cool-self-hosted-model","usage":{"prompt_tokens":3,"total_tokens":3}}`
 		return []byte(embeddingTemplate), nil
